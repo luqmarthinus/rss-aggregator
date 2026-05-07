@@ -31,5 +31,5 @@ async def import_opml(file: UploadFile = File(...), db: Connection = Depends(get
         await db.commit()
         logger.info("OPML import added {} feeds", added)
         return {"added": added}
-    except ET.ParseError:
-        raise HTTPException(status_code=400, detail="Invalid OPML file")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

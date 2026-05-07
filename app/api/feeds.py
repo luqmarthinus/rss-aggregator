@@ -8,13 +8,13 @@ from loguru import logger
 
 router = APIRouter(prefix="/feeds", tags=["Feeds"])
 
-@router.get("/", response_model=list[FeedOut])
+@router.get("", response_model=list[FeedOut])
 async def list_feeds(db: Connection = Depends(get_db)):
     cursor = await db.execute("SELECT id, url, title, added_at, last_fetch_at FROM feeds ORDER BY added_at DESC")
     rows = await cursor.fetchall()
     return [dict(row) for row in rows]
 
-@router.post("/", status_code=201, dependencies=[Depends(require_api_key), Depends(rate_limit)])
+@router.post("", status_code=201, dependencies=[Depends(require_api_key), Depends(rate_limit)])
 async def add_feed(feed: FeedCreate, db: Connection = Depends(get_db)):
     url = validate_feed_url(str(feed.url))
     try:
