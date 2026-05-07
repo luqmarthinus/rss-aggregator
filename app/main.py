@@ -42,10 +42,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="RSS Aggregator API", version="1.0.0", lifespan=lifespan)
 
-# CORS (for frontend dev only – restrict in production)
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change to your domain in production
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

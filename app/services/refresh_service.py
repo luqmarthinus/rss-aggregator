@@ -1,5 +1,4 @@
 import asyncio
-from aiosqlite import Connection
 from loguru import logger
 from app.services.feed_fetcher import fetch_and_store_feed
 from app.services.ntfy_notifier import send_ntfy_notification
@@ -19,7 +18,6 @@ async def refresh_all_feeds():
             async def refresh_one(feed):
                 async with semaphore:
                     new_articles = await fetch_and_store_feed(db, feed["id"], feed["url"])
-                    # Send notifications for new articles
                     for art in new_articles:
                         await send_ntfy_notification(
                             title=art["title"],
