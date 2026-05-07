@@ -110,7 +110,7 @@ The FastAPI container defines a healthcheck that polls `/health` every 30 second
 
 | Variable   | Description                       | Default                                                                 |
 |----------|--------------------------------| -----------------------------------------------------------------------------|
-| `API_KEY`     | Required. 64‑character hex key for write operations. Generate with openssl rand -hex 32        | `changeme` |
+| `API_KEY`     | Required. 64‑character hex key for write operations. Generate with openssl rand -hex 32        | Not set |
 | `DATABASE_PATH`     | Path inside the container where SQLite stores `aggregator.db`  | `/app/data/aggregator.db`  |
 | `REFRESH_INTERVAL_MINUTES`      | How often the background refresh runs (minutes)     | `30`|
 | `RATE_LIMIT_PER_MINUTE`     | Maximum number of write requests per IP per minute | `10` |
