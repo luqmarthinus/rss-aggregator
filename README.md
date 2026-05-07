@@ -12,6 +12,12 @@ A self‑contained RSS feed reader built with FastAPI, SQLite, and a modern Boot
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.11-grey?logo=fastapi)
 ![SQLite](https://img.shields.io/badge/SQLite-3.x-003B57?logo=sqlite&logoColor=white)
 
+## Screenshot
+
+![RSS Aggregator Dashboard](docs/screen.jpg)
+
+The interface shows a left sidebar with feeds, an article grid, search/filter controls, and OPML import/export.
+
 ## Quick start
 
 1. Clone the repository:
