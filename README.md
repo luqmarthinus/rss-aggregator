@@ -52,6 +52,8 @@ docker compose up --build -d
 
 5. On the web interface, click the `API Key` button and paste the API_KEY from your `.env` file. Then add feeds like https://hnrss.org/newest, https://feeds.bbci.co.uk/news/rss.xml or whatever you like. Press `Refresh` to fetch articles.
 
+---
+
 ## What's included
 | Component | Description | Host port |
 |------------|---------|-----------|
@@ -60,6 +62,8 @@ docker compose up --build -d
 | Frontend      | Vanilla JS + Bootstrap 5, Bootstrap Icons, DOMPurify for safe HTML | same as app (8000) |
 
 All services are defined in `compose.yaml`. The FastAPI container serves the frontend from `/static` and exposes the versioned API under `/v1` while keeping the original (unversioned) endpoints for backward compatibility. SQLite data and logs are stored in Docker named volumes (`data_volume, logs_volume`).
+
+---
 
 ## Endpoints (versioned under `/v1` – also available without prefix)
 
@@ -77,6 +81,8 @@ All services are defined in `compose.yaml`. The FastAPI container serves the fro
 | GET | `/health` | No | Container liveness/readiness check |
 
 All endpoints are documented in Swagger UI with request/response examples. The unversioned endpoints are aliases of the /v1 routes and are kept for compatibility with the frontend and existing clients.
+
+---
 
 ## Frontend integration
 
@@ -101,6 +107,7 @@ curl -X POST http://localhost:8000/feeds \
 ```
 To build your own frontend or client, refer to the OpenAPI spec at `/openapi.json`. The included frontend (`static/js/app.js`) is a complete reference.
 
+---
 
 ## Health checks
 The FastAPI container defines a healthcheck that polls `/health` every 30 seconds.The container is marked healthy only when the API responds with 200 OK.
@@ -121,6 +128,7 @@ These variables are set in `.env`. After changing them, restart the container:
 docker compose down
 docker compose up -d
 ```
+---
 
 ## Stopping the stack
 
@@ -128,6 +136,8 @@ docker compose up -d
 docker compose down
 ```
 Add `-v` to also remove data (feeds, articles, logs).
+
+---
 
 ## Backups
 Back up the SQLite database (stored in the named volume `data_volume`) using the provided script:
@@ -142,6 +152,7 @@ Back up the SQLite database (stored in the named volume `data_volume`) using the
 
 The script stops the container during restore to ensure consistency. For scheduled backups, add a cron job that runs the backup command.
 
+---
 
 ## Troubleshooting
 Containers restarting/healthcheck failing – Check logs:
