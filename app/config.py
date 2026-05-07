@@ -7,8 +7,6 @@ class Settings(BaseSettings):
     database_path: str = Field("./data/aggregator.db", alias="DATABASE_PATH")
     refresh_interval_minutes: int = Field(30, alias="REFRESH_INTERVAL_MINUTES")
     rate_limit_per_minute: int = Field(10, alias="RATE_LIMIT_PER_MINUTE")
-    ntfy_topic: Optional[str] = Field(None, alias="NTFY_TOPIC")
-    ntfy_url: str = Field("https://ntfy.sh", alias="NTFY_URL")
 
     class Config:
         env_file = ".env"
