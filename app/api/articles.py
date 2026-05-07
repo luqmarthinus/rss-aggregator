@@ -8,7 +8,7 @@ from loguru import logger
 
 router = APIRouter(prefix="/articles", tags=["Articles"])
 
-@router.get("/", response_model=list[ArticleOut])
+@router.get("", response_model=list[ArticleOut])
 async def list_articles(
     feed_id: Optional[int] = Query(None),
     is_read: Optional[bool] = Query(None),
