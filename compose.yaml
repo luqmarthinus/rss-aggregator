@@ -4,8 +4,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/app/data          # keep data bind mount – needs persistence
-      - logs_volume:/app/logs     # named volume for logs – no host permission issues
+      - data_volume:/app/data
+      - logs_volume:/app/logs
     environment:
       - DATABASE_PATH=/app/data/aggregator.db
       - API_KEY=${API_KEY:-changeme}
@@ -16,4 +16,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  data_volume:
   logs_volume:
