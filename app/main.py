@@ -50,12 +50,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+# Include routers (unversioned) for backward compatibility
 app.include_router(feeds.router)
 app.include_router(articles.router)
 app.include_router(refresh.router)
 app.include_router(stats.router)
 app.include_router(opml.router)
+
+app.include_router(feeds.router, prefix="/v1")   # adds /v1/feeds
+app.include_router(articles.router, prefix="/v1")
+app.include_router(refresh.router, prefix="/v1")
+app.include_router(stats.router, prefix="/v1")
+app.include_router(opml.router, prefix="/v1")
 
 # Health check
 @app.get("/health")
