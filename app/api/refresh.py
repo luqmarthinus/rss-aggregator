@@ -7,7 +7,7 @@ from loguru import logger
 
 router = APIRouter(prefix="/refresh", tags=["Refresh"])
 
-@router.post("/", dependencies=[Depends(require_api_key), Depends(rate_limit)])
+@router.post("", dependencies=[Depends(require_api_key), Depends(rate_limit)])
 async def manual_refresh(background_tasks: BackgroundTasks, db: Connection = Depends(get_db)):
     background_tasks.add_task(refresh_all_feeds, db)
     logger.info("Manual refresh triggered")
