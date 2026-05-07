@@ -16,15 +16,11 @@ async def refresh_all_feeds():
             semaphore = asyncio.Semaphore(5)
             async def refresh_one(feed):
                 async with semaphore:
-                    new_articles = await fetch_and_store_feed(db, feed["id"], feed["url"])
-                            title=art["title"],
-                            message=art["summary"][:200],
-                            link=art["link"]
-                        )
+                    await fetch_and_store_feed(db, feed["id"], feed["url"])
             tasks = [refresh_one(feed) for feed in feeds]
             await asyncio.gather(*tasks, return_exceptions=True)
             logger.info("Refresh cycle completed")
         except Exception as e:
             logger.error(f"Refresh cycle failed: {e}")
         finally:
-            break  # only one connection from the generator
+            break
