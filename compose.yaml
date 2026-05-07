@@ -4,8 +4,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
+      - ./data:/app/data          # keep data bind mount – needs persistence
+      - logs_volume:/app/logs     # named volume for logs – no host permission issues
     environment:
       - DATABASE_PATH=/app/data/aggregator.db
       - API_KEY=${API_KEY:-changeme}
@@ -14,3 +14,6 @@ services:
       - NTFY_TOPIC=${NTFY_TOPIC:-}
       - NTFY_URL=${NTFY_URL:-https://ntfy.sh}
     restart: unless-stopped
+
+volumes:
+  logs_volume:
