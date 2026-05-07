@@ -11,7 +11,10 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --chown=app:app ./app ./app
 COPY --chown=app:app ./static ./static
 
-# Create and set ownership for both logs and data directories
+# Install curl for debugging (optional)
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Create and set ownership for logs and data directories
 RUN mkdir -p /app/logs /app/data && chown -R app:app /app/logs /app/data
 
 USER app

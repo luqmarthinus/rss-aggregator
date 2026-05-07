@@ -7,9 +7,8 @@ import sys
 import asyncio
 from app.database import init_db
 from app.config import settings
-from app.api import opml
 from app.services.refresh_service import refresh_all_feeds
-from app.api import feeds, articles, refresh, stats, opml, opml
+from app.api import feeds, articles, refresh, stats, opml
 
 # Configure Loguru
 logger.remove()
@@ -29,11 +28,7 @@ async def lifespan(app: FastAPI):
         while True:
             await asyncio.sleep(settings.refresh_interval_minutes * 60)
             logger.info("Background refresh starting")
-            # Need a fresh DB connection – we'll acquire inside
-            from app.database import get_db
-            async for db in get_db():
-                await refresh_all_feeds(db)
-                break
+            await refresh_all_feeds()
     global refresh_task
     refresh_task = asyncio.create_task(periodic_refresh())
     yield
