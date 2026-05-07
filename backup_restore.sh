@@ -1,30 +1,40 @@
-#!/bin/bash
-# Usage: ./backup_restore.sh backup <database_path> [backup_dir]
-#        ./backup_restore.sh restore <backup_file> <database_path>
-
+#!/bin/env bash
 set -e
-COMMAND=$1
-case $COMMAND in
+
+VOLUME_NAME="rss-aggregator_data_volume"
+
+case $1 in
     backup)
-        DB_PATH=${2:-./data/aggregator.db}
-        BACKUP_DIR=${3:-./backups}
+        BACKUP_DIR=${2:-./backups}
         mkdir -p "$BACKUP_DIR"
-        BACKUP_FILE="$BACKUP_DIR/feeds_$(date +%Y%m%d_%H%M%S).db"
-        sqlite3 "$DB_PATH" ".backup '$BACKUP_FILE'"
+        BACKUP_FILE="$BACKUP_DIR/aggregator_$(date +%Y%m%d_%H%M%S).db"
+        echo "Creating backup of $VOLUME_NAME ..."
+        docker run --rm -v "$VOLUME_NAME":/data -v "$BACKUP_DIR":/backup alpine cp /data/aggregator.db "/backup/$(basename "$BACKUP_FILE")"
         echo "Backup saved to $BACKUP_FILE"
         ;;
     restore)
-        BACKUP_FILE=$2
-        DB_PATH=$3
-        if [ ! -f "$BACKUP_FILE" ]; then
-            echo "Backup file not found: $BACKUP_FILE"
+        BACKUP_FILE="$2"
+        if [ -z "$BACKUP_FILE" ]; then
+            echo "Usage: $0 restore /path/to/backup.db"
             exit 1
         fi
-        cp "$BACKUP_FILE" "$DB_PATH"
-        echo "Restored $BACKUP_FILE to $DB_PATH"
+        if [ ! -f "$BACKUP_FILE" ]; then
+            echo "Backup file not found: $BACKUP_FILE"
+            echo "Available backups:"
+            find ./backups -maxdepth 1 -name "aggregator_*.db" -type f 2>/dev/null || echo "No backups found in ./backups"
+            exit 1
+        fi
+        echo "Restoring from $BACKUP_FILE to $VOLUME_NAME ..."
+        docker compose down
+        BACKUP_DIR=$(dirname "$BACKUP_FILE")
+        docker run --rm -v "$VOLUME_NAME":/data -v "$BACKUP_DIR":/backup alpine cp "/backup/$(basename "$BACKUP_FILE")" /data/aggregator.db
+        docker compose up -d
+        echo "Restore complete. Container restarted."
         ;;
     *)
         echo "Usage: $0 {backup|restore} [args]"
+        echo "  backup [backup_dir]                 default backup_dir = ./backups"
+        echo "  restore /path/to/backup.db"
         exit 1
         ;;
 esac
