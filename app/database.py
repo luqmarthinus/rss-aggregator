@@ -7,12 +7,14 @@ DB_PATH = Path(settings.database_path)
 
 async def get_db():
     async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("PRAGMA foreign_keys = ON")
         db.row_factory = aiosqlite.Row
         yield db
 
 async def init_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("PRAGMA foreign_keys = ON")
         await db.execute("PRAGMA journal_mode=WAL")
         # feeds table
         await db.execute("""
@@ -24,7 +26,7 @@ async def init_db():
                 last_fetch_at TIMESTAMP
             )
         """)
-        # articles table
+        # articles table with CASCADE
         await db.execute("""
             CREATE TABLE IF NOT EXISTS articles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

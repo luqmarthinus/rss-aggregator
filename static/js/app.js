@@ -7,7 +7,7 @@ function setApiKey() {
         apiKey = key;
         sessionStorage.setItem("apiKey", key);
         alert("API key saved for this session");
-        loadFeeds();      // refresh after key set
+        loadFeeds();
         loadArticles();
     }
 }
@@ -40,6 +40,11 @@ async function loadFeeds() {
         if (filterSelect) {
             filterSelect.innerHTML = '<option value="all">All feeds</option>' + feeds.map(f => `<option value="${f.id}">${escapeHtml(f.title || f.url)}</option>`).join("");
         }
+        // If current selected feed no longer exists, reset selection
+        if (currentFeedId && !feeds.some(f => f.id == currentFeedId)) {
+            currentFeedId = null;
+            document.getElementById("feedFilter").value = "all";
+        }
         attachFeedEvents();
     } catch (err) {
         console.error("Failed to load feeds:", err);
@@ -47,7 +52,6 @@ async function loadFeeds() {
 }
 
 function attachFeedEvents() {
-    // Feed item click (select feed)
     document.querySelectorAll(".feed-item").forEach(el => {
         el.addEventListener("click", (e) => {
             if (e.target.classList.contains("delete-feed")) return;
@@ -57,7 +61,6 @@ function attachFeedEvents() {
             loadArticles();
         });
     });
-    // Delete feed button
     document.querySelectorAll(".delete-feed").forEach(btn => {
         btn.addEventListener("click", async (e) => {
             e.stopPropagation();
@@ -65,10 +68,12 @@ function attachFeedEvents() {
             if (!confirm("Delete this feed and all its articles?")) return;
             try {
                 await apiCall(`/feeds/${id}`, { method: "DELETE" });
+                // Reset selection if deleted feed was selected
                 if (currentFeedId == id) {
                     currentFeedId = null;
                     document.getElementById("feedFilter").value = "all";
                 }
+                // Reload everything
                 await loadFeeds();
                 await loadArticles();
             } catch (err) {
@@ -91,7 +96,10 @@ async function loadArticles() {
         const articles = await apiCall(url);
         const container = document.getElementById("articlesContainer");
         if (!container) return;
-        if (!articles.length) { container.innerHTML = "<p class='text-muted'>No articles found.</p>"; return; }
+        if (!articles.length) {
+            container.innerHTML = "<p class='text-muted'>No articles found.</p>";
+            return;
+        }
         container.innerHTML = articles.map(a => `
             <div class="card article-card ${a.is_read ? 'article-read' : ''}">
                 <div class="card-body">
@@ -103,7 +111,6 @@ async function loadArticles() {
                 </div>
             </div>
         `).join("");
-        // Attach mark-read handlers
         document.querySelectorAll(".mark-read").forEach(btn => {
             btn.addEventListener("click", async () => {
                 const id = btn.dataset.id;
@@ -123,7 +130,11 @@ async function addFeed() {
     try {
         await apiCall("/feeds", { method: "POST", body: JSON.stringify({ url }) });
         bootstrap.Modal.getInstance(document.getElementById("addFeedModal")).hide();
-        loadFeeds();
+        await loadFeeds();
+        // Clear any selection and load articles from all feeds
+        currentFeedId = null;
+        document.getElementById("feedFilter").value = "all";
+        await loadArticles();
     } catch (err) {
         alert("Failed to add feed. Check API key and URL.");
     }
@@ -132,8 +143,9 @@ async function addFeed() {
 async function manualRefresh() {
     try {
         await apiCall("/refresh", { method: "POST" });
-        alert("Refresh started. Articles will appear shortly.");
-        // poll for new articles after a few seconds
+        alert("Refresh started. New articles will appear in a few seconds.");
+        // Reload feeds first (to update last fetch time) and then articles
+        await loadFeeds();
         setTimeout(() => loadArticles(), 5000);
     } catch (err) {
         alert("Refresh failed. Check API key.");
@@ -160,7 +172,10 @@ function importOpml() {
             });
             if (res.ok) {
                 alert("Imported successfully");
-                loadFeeds();
+                await loadFeeds();
+                currentFeedId = null;
+                document.getElementById("feedFilter").value = "all";
+                await loadArticles();
             } else {
                 alert("Import failed");
             }
@@ -181,7 +196,6 @@ function escapeHtml(str) {
     });
 }
 
-// Event listeners – wait for DOM to load
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("apiKeyBtn").onclick = setApiKey;
     document.getElementById("refreshBtn").onclick = manualRefresh;
@@ -191,7 +205,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("importOpmlBtn").onclick = importOpml;
     document.getElementById("searchBtn").onclick = () => loadArticles();
     document.getElementById("readFilter").onchange = () => loadArticles();
-    document.getElementById("feedFilter").onchange = (e) => { currentFeedId = e.target.value === "all" ? null : e.target.value; loadArticles(); };
+    document.getElementById("feedFilter").onchange = (e) => { 
+        currentFeedId = e.target.value === "all" ? null : e.target.value;
+        loadArticles();
+    };
     loadFeeds();
     loadArticles();
 });
