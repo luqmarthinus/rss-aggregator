@@ -28,9 +28,13 @@ async def add_feed(feed: FeedCreate, db: Connection = Depends(get_db)):
 
 @router.delete("/{feed_id}", dependencies=[Depends(require_api_key), Depends(rate_limit)])
 async def delete_feed(feed_id: int, db: Connection = Depends(get_db)):
-    cursor = await db.execute("DELETE FROM feeds WHERE id = ?", (feed_id,))
-    if cursor.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Feed not found")
-    await db.commit()
-    logger.info("Deleted feed id={}", feed_id)
-    return {"ok": True}
+    try:
+        cursor = await db.execute("DELETE FROM feeds WHERE id = ?", (feed_id,))
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Feed not found")
+        await db.commit()
+        logger.info("Deleted feed id={}", feed_id)
+        return {"ok": True}
+    except Exception as e:
+        logger.exception(f"Failed to delete feed {feed_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")

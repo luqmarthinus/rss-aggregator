@@ -1,9 +1,9 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, Field
 from datetime import datetime
 from typing import Optional
 
 class FeedCreate(BaseModel):
-    url: HttpUrl
+    url: HttpUrl = Field(..., example="https://hnrss.org/newest")
 
 class FeedOut(BaseModel):
     id: int

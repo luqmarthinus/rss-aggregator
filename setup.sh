@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # Initial setup for RSS Aggregator
 
 # Create data directory with correct permissions for container user (UID 1000)
