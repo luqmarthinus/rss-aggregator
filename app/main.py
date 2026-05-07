@@ -7,8 +7,9 @@ import sys
 import asyncio
 from app.database import init_db
 from app.config import settings
+from app.api import opml
 from app.services.refresh_service import refresh_all_feeds
-from app.api import feeds, articles, refresh, stats
+from app.api import feeds, articles, refresh, stats, opml, opml
 
 # Configure Loguru
 logger.remove()
@@ -59,6 +60,7 @@ app.include_router(feeds.router)
 app.include_router(articles.router)
 app.include_router(refresh.router)
 app.include_router(stats.router)
+app.include_router(opml.router)
 
 # Health check
 @app.get("/health")
