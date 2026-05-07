@@ -14,22 +14,19 @@ case $1 in
         ;;
     restore)
         BACKUP_FILE="$2"
-        if [ -z "$BACKUP_FILE" ]; then
-            echo "Usage: $0 restore /path/to/backup.db"
-            exit 1
-        fi
         if [ ! -f "$BACKUP_FILE" ]; then
             echo "Backup file not found: $BACKUP_FILE"
-            echo "Available backups:"
-            find ./backups -maxdepth 1 -name "aggregator_*.db" -type f 2>/dev/null || echo "No backups found in ./backups"
             exit 1
         fi
-        echo "Restoring from $BACKUP_FILE to $VOLUME_NAME ..."
+        echo "Restoring from $BACKUP_FILE ..."
         docker compose down
-        BACKUP_DIR=$(dirname "$BACKUP_FILE")
-        docker run --rm -v "$VOLUME_NAME":/data -v "$BACKUP_DIR":/backup alpine cp "/backup/$(basename "$BACKUP_FILE")" /data/aggregator.db
+        # Copy and set ownership to app:app (UID 1000:1000)
+        docker run --rm -v "$VOLUME_NAME":/data -v "$(dirname "$BACKUP_FILE")":/backup --user root alpine sh -c "
+            cp /backup/$(basename "$BACKUP_FILE") /data/aggregator.db &&
+            chown 1000:1000 /data/aggregator.db
+        "
         docker compose up -d
-        echo "Restore complete. Container restarted."
+        echo "Restore complete."
         ;;
     *)
         echo "Usage: $0 {backup|restore} [args]"
