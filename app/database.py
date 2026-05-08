@@ -5,18 +5,50 @@ from app.config import settings
 
 DB_PATH = Path(settings.database_path)
 
+
+# ------------------------------------------------------------------------------
+# Connection dependency (per-request)
+# ------------------------------------------------------------------------------
+
 async def get_db():
+    """
+    Provides a database connection per request.
+    Keeps compatibility with FastAPI dependency injection.
+    """
+
     async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("PRAGMA foreign_keys = ON")
+        # Required per-connection settings
+        await db.execute("PRAGMA foreign_keys = ON;")
+
+        # Ensures row access by column name (existing behaviour)
         db.row_factory = aiosqlite.Row
+
         yield db
 
+
+# ------------------------------------------------------------------------------
+# One-time database initialization
+# ------------------------------------------------------------------------------
+
 async def init_db():
+    """
+    Initializes database schema and applies persistent PRAGMA settings.
+
+    Safe to run multiple times (idempotent).
+    """
+
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+
     async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("PRAGMA foreign_keys = ON")
-        await db.execute("PRAGMA journal_mode=WAL")
-        # feeds table
+        # Enable WAL mode (persistent at DB level)
+        await db.execute("PRAGMA journal_mode=WAL;")
+
+        # Enable foreign keys for consistency during init operations
+        await db.execute("PRAGMA foreign_keys = ON;")
+
+        # ----------------------------------------------------------------------
+        # Feeds table
+        # ----------------------------------------------------------------------
         await db.execute("""
             CREATE TABLE IF NOT EXISTS feeds (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,7 +58,10 @@ async def init_db():
                 last_fetch_at TIMESTAMP
             )
         """)
-        # articles table with CASCADE
+
+        # ----------------------------------------------------------------------
+        # Articles table
+        # ----------------------------------------------------------------------
         await db.execute("""
             CREATE TABLE IF NOT EXISTS articles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,8 +78,25 @@ async def init_db():
                 UNIQUE(feed_id, guid)
             )
         """)
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_articles_feed_id ON articles (feed_id)")
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_articles_published ON articles (published_at DESC)")
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_articles_read ON articles (is_read)")
+
+        # ----------------------------------------------------------------------
+        # Indexes (performance)
+        # ----------------------------------------------------------------------
+        await db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_articles_feed_id
+            ON articles (feed_id)
+        """)
+
+        await db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_articles_published
+            ON articles (published_at DESC)
+        """)
+
+        await db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_articles_read
+            ON articles (is_read)
+        """)
+
         await db.commit()
+
         logger.info("Database initialized at {}", DB_PATH)
