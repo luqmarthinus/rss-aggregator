@@ -1,22 +1,83 @@
-FROM python:3.11.8-slim AS builder
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# ------------------------------------------------------------------------------
+# Builder stage
+# ------------------------------------------------------------------------------
 
-FROM python:3.11.8-slim
-RUN addgroup --system app && adduser --system --group app
+FROM python:3.11.8-slim-bookworm AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /build
+
+COPY requirements.txt .
+
+RUN pip install --upgrade pip && \
+    pip install --prefix=/install -r requirements.txt
+
+# ------------------------------------------------------------------------------
+# Runtime stage
+# ------------------------------------------------------------------------------
+
+FROM python:3.11.8-slim-bookworm
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# ------------------------------------------------------------------------------
+# Create non-root user
+# ------------------------------------------------------------------------------
+
+RUN addgroup --system --gid 1001 app && \
+    adduser --system --uid 1001 --ingroup app app
+
+# ------------------------------------------------------------------------------
+# Application directory
+# ------------------------------------------------------------------------------
+
 WORKDIR /app
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+
+# ------------------------------------------------------------------------------
+# Copy Python dependencies
+# ------------------------------------------------------------------------------
+
+COPY --from=builder /install /usr/local
+
+# ------------------------------------------------------------------------------
+# Copy application
+# ------------------------------------------------------------------------------
+
 COPY --chown=app:app ./app ./app
 COPY --chown=app:app ./static ./static
 
-# Install curl for debugging (optional)
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# ------------------------------------------------------------------------------
+# Create runtime directories
+# ------------------------------------------------------------------------------
 
-# Create and set ownership for logs and data directories
-RUN mkdir -p /app/logs /app/data && chown -R app:app /app/logs /app/data
+RUN mkdir -p /app/logs /app/data && \
+    chown -R app:app /app
+
+# ------------------------------------------------------------------------------
+# Drop privileges
+# ------------------------------------------------------------------------------
 
 USER app
+
+# ------------------------------------------------------------------------------
+# Network
+# ------------------------------------------------------------------------------
+
 EXPOSE 8000
+
+# ------------------------------------------------------------------------------
+# Healthcheck
+# ------------------------------------------------------------------------------
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" || exit 1
+
+# ------------------------------------------------------------------------------
+# Start application
+# ------------------------------------------------------------------------------
+
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
