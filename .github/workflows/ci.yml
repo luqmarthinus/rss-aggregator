@@ -33,19 +33,25 @@ jobs:
       - name: Build Docker image
         run: docker build --no-cache -t rss-aggregator:ci .
 
-      - name: Smoke test container (healthcheck)
+      - name: Smoke test container
         run: |
           docker run -d --name test-container -p 8000:8000 rss-aggregator:ci
-          echo "Waiting for healthcheck..."
+          echo "Waiting for container to be ready..."
+          # Wait up to 60 seconds for the health endpoint to respond
           for i in {1..30}; do
-            STATUS=$(docker inspect --format='{{.State.Health.Status}}' test-container)
-            if [ "$STATUS" = "healthy" ]; then
-              echo "Container is healthy"
+            if docker exec test-container python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" 2>/dev/null; then
+              echo "Health endpoint responded"
               break
             fi
+            echo "Attempt $i/30 - waiting..."
             sleep 2
           done
-          docker inspect --format='{{.State.Health.Status}}' test-container | grep -q healthy || (docker logs test-container && exit 1)
-          curl --fail http://localhost:8000/health
+          # Final check – exit if health endpoint still not responding
+          if ! docker exec test-container python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" 2>/dev/null; then
+            echo "Health endpoint did not respond within time limit"
+            docker logs test-container
+            exit 1
+          fi
+          docker logs test-container
           docker stop test-container
           docker rm test-container
