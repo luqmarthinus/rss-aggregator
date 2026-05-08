@@ -1,37 +1,83 @@
-#!/bin/env bash
-set -e
+#!/usr/bin/env bash
 
-VOLUME_NAME="rss-aggregator_data_volume"
+set -Eeuo pipefail
 
-case $1 in
+VOLUME_NAME="rss_aggregator_data"
+BACKUP_DIR_DEFAULT="./backups"
+
+usage() {
+    cat <<EOF
+Usage:
+  $0 backup [backup_dir]
+  $0 restore /path/to/backup.db
+EOF
+}
+
+backup_db() {
+    local backup_dir="${1:-$BACKUP_DIR_DEFAULT}"
+
+    mkdir -p "$backup_dir"
+
+    local backup_file
+    backup_file="$backup_dir/aggregator_$(date +%Y%m%d_%H%M%S).db"
+
+    echo "[+] Creating SQLite backup..."
+
+    docker run --rm \
+        -v "${VOLUME_NAME}:/data" \
+        -v "$(realpath "$backup_dir"):/backup" \
+        alpine sh -c "
+            apk add --no-cache sqlite >/dev/null &&
+            sqlite3 /data/aggregator.db '.backup /backup/$(basename "$backup_file")'
+        "
+
+    echo "[+] Backup saved to: $backup_file"
+}
+
+restore_db() {
+    local backup_file="$1"
+
+    if [[ -z "${backup_file:-}" ]]; then
+        echo "[-] Missing backup file"
+        usage
+        exit 1
+    fi
+
+    if [[ ! -f "$backup_file" ]]; then
+        echo "[-] Backup file not found: $backup_file"
+        exit 1
+    fi
+
+    echo "[+] Stopping containers..."
+    docker compose down
+
+    echo "[+] Restoring database..."
+
+    docker run --rm \
+        -v "${VOLUME_NAME}:/data" \
+        -v "$(dirname "$(realpath "$backup_file")"):/backup" \
+        --user root \
+        alpine sh -c "
+            cp /backup/$(basename "$backup_file") /data/aggregator.db &&
+            chown 1001:1001 /data/aggregator.db &&
+            chmod 600 /data/aggregator.db
+        "
+
+    echo "[+] Starting containers..."
+    docker compose up -d
+
+    echo "[+] Restore complete."
+}
+
+case "${1:-}" in
     backup)
-        BACKUP_DIR=${2:-./backups}
-        mkdir -p "$BACKUP_DIR"
-        BACKUP_FILE="$BACKUP_DIR/aggregator_$(date +%Y%m%d_%H%M%S).db"
-        echo "Creating backup of $VOLUME_NAME ..."
-        docker run --rm -v "$VOLUME_NAME":/data -v "$BACKUP_DIR":/backup alpine cp /data/aggregator.db "/backup/$(basename "$BACKUP_FILE")"
-        echo "Backup saved to $BACKUP_FILE"
+        backup_db "${2:-}"
         ;;
     restore)
-        BACKUP_FILE="$2"
-        if [ ! -f "$BACKUP_FILE" ]; then
-            echo "Backup file not found: $BACKUP_FILE"
-            exit 1
-        fi
-        echo "Restoring from $BACKUP_FILE ..."
-        docker compose down
-        # Copy and set ownership to app:app (UID 1000:1000)
-        docker run --rm -v "$VOLUME_NAME":/data -v "$(dirname "$BACKUP_FILE")":/backup --user root alpine sh -c "
-            cp /backup/$(basename "$BACKUP_FILE") /data/aggregator.db &&
-            chown 1000:1000 /data/aggregator.db
-        "
-        docker compose up -d
-        echo "Restore complete."
+        restore_db "${2:-}"
         ;;
     *)
-        echo "Usage: $0 {backup|restore} [args]"
-        echo "  backup [backup_dir]                 default backup_dir = ./backups"
-        echo "  restore /path/to/backup.db"
+        usage
         exit 1
         ;;
 esac

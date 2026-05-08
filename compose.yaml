@@ -1,18 +1,38 @@
 services:
   rss-aggregator:
     build: .
+
+    container_name: rss_aggregator
+
+    restart: unless-stopped
+
     ports:
       - "8000:8000"
+
+    environment:
+      DATABASE_PATH: ${DATABASE_PATH}
+      API_KEY: ${API_KEY}
+      REFRESH_INTERVAL_MINUTES: ${REFRESH_INTERVAL_MINUTES}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE}
+
     volumes:
       - data_volume:/app/data
       - logs_volume:/app/logs
-    environment:
-      - DATABASE_PATH=/app/data/aggregator.db
-      - API_KEY=${API_KEY:-changeme}
-      - REFRESH_INTERVAL_MINUTES=30
-      - RATE_LIMIT_PER_MINUTE=10
-    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    cap_drop:
+      - ALL
+
+    read_only: true
+
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
 
 volumes:
   data_volume:
+    name: rss_aggregator_data
+
   logs_volume:
+    name: rss_aggregator_logs
