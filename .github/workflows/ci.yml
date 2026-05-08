@@ -19,8 +19,17 @@ jobs:
       - run: ruff check .
       - run: docker build --no-cache -t rss-aggregator .
 
-      # Smoke test using curl with retry, dummy API key
-      - run: |
+      - name: Smoke test container
+        run: |
           docker run --rm -d --name test -p 8000:8000 -e API_KEY=ci rss-aggregator
-          curl --retry 15 --retry-delay 2 --retry-connrefused http://localhost:8000/health
+          echo "Waiting for container to start..."
+          for i in {1..20}; do
+            if docker exec test python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" 2>/dev/null; then
+              echo "Health endpoint OK"
+              break
+            fi
+            echo "Attempt $i/20 - waiting..."
+            sleep 2
+          done
+          docker exec test python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
           docker stop test
