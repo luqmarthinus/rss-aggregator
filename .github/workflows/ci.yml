@@ -33,11 +33,19 @@ jobs:
       - name: Build Docker image
         run: docker build --no-cache -t rss-aggregator:ci .
 
-      - name: Smoke test container
+      - name: Smoke test container (healthcheck)
         run: |
           docker run -d --name test-container -p 8000:8000 rss-aggregator:ci
-          sleep 10
+          echo "Waiting for healthcheck..."
+          for i in {1..30}; do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' test-container)
+            if [ "$STATUS" = "healthy" ]; then
+              echo "Container is healthy"
+              break
+            fi
+            sleep 2
+          done
+          docker inspect --format='{{.State.Health.Status}}' test-container | grep -q healthy || (docker logs test-container && exit 1)
           curl --fail http://localhost:8000/health
-          docker logs test-container
           docker stop test-container
           docker rm test-container
