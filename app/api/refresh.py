@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
-from app.dependencies import require_api_key, rate_limit
-from app.services.refresh_service import refresh_all_feeds
+from fastapi import APIRouter, BackgroundTasks, Depends
 from loguru import logger
+
+from app.dependencies import rate_limit, require_api_key
+from app.services.refresh_service import refresh_all_feeds
 
 router = APIRouter(prefix="/refresh", tags=["Refresh"])
 

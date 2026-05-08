@@ -1,7 +1,10 @@
 import asyncio
+
 from loguru import logger
-from app.services.feed_fetcher import fetch_and_store_feed
+
 from app.database import get_db
+from app.services.feed_fetcher import fetch_and_store_feed
+
 
 async def refresh_all_feeds():
     """Refresh all feeds using its own database connection."""

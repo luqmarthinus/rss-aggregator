@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
 from aiosqlite import Connection
+from fastapi import APIRouter, Depends, HTTPException
+from loguru import logger
+
 from app.database import get_db
-from app.dependencies import require_api_key, rate_limit
+from app.dependencies import rate_limit, require_api_key
 from app.schemas import FeedCreate, FeedOut
 from app.utils.security import validate_feed_url
-from loguru import logger
 
 router = APIRouter(prefix="/feeds", tags=["Feeds"])
 

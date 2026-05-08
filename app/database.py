@@ -1,6 +1,8 @@
-import aiosqlite
 from pathlib import Path
+
+import aiosqlite
 from loguru import logger
+
 from app.config import settings
 
 DB_PATH = Path(settings.database_path)

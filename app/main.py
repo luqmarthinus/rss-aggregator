@@ -1,14 +1,16 @@
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-from loguru import logger
-import sys
 import asyncio
-from app.database import init_db
+import sys
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from loguru import logger
+
+from app.api import articles, feeds, opml, refresh, stats
 from app.config import settings
+from app.database import init_db
 from app.services.refresh_service import refresh_all_feeds
-from app.api import feeds, articles, refresh, stats, opml
 
 # Configure Loguru
 logger.remove()

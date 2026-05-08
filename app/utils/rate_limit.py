@@ -1,6 +1,8 @@
 import time
 from collections import defaultdict
+
 from fastapi import HTTPException, Request
+
 from app.config import settings
 
 # key: IP, value: list of timestamps

@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
-from aiosqlite import Connection
 from typing import Optional
-from app.database import get_db
-from app.dependencies import require_api_key, rate_limit
-from app.schemas import ArticleOut, ArticleReadUpdate
+
+from aiosqlite import Connection
+from fastapi import APIRouter, Depends, Query
 from loguru import logger
+
+from app.database import get_db
+from app.dependencies import rate_limit, require_api_key
+from app.schemas import ArticleOut, ArticleReadUpdate
 
 router = APIRouter(prefix="/articles", tags=["Articles"])
 

@@ -1,11 +1,11 @@
+from datetime import datetime
+from typing import Any, Dict, List
+
 import aiohttp
 import feedparser
-from datetime import datetime
-from typing import List, Dict, Any
 from aiosqlite import Connection
 from loguru import logger
-from app.config import settings
-import asyncio
+
 
 async def fetch_and_store_feed(db: Connection, feed_id: int, feed_url: str) -> List[Dict[str, Any]]:
     """Fetch a single RSS/Atom feed and store new articles. Returns list of new articles."""

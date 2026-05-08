@@ -1,8 +1,10 @@
-import xml.etree.ElementTree as ET
 import re
-from typing import List, Union, Dict
+import xml.etree.ElementTree as ET
 from sqlite3 import Row
+from typing import Dict, List, Union
+
 from loguru import logger
+
 
 def generate_opml(feeds: List[Union[Dict, Row]]) -> str:
     root = ET.Element("opml", version="1.0")

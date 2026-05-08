@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends
 from aiosqlite import Connection
+from fastapi import APIRouter, Depends
+
 from app.database import get_db
 
 router = APIRouter(prefix="/stats", tags=["Stats"])

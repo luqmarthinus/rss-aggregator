@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
-from fastapi.responses import PlainTextResponse
+
 from aiosqlite import Connection
-from app.database import get_db
-from app.dependencies import require_api_key, rate_limit
-from app.services.opml_service import generate_opml, parse_opml
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import PlainTextResponse
 from loguru import logger
-import xml.etree.ElementTree as ET
+
+from app.database import get_db
+from app.dependencies import rate_limit, require_api_key
+from app.services.opml_service import generate_opml, parse_opml
 
 router = APIRouter(prefix="/feeds", tags=["OPML"])
 
@@ -26,7 +27,7 @@ async def import_opml(file: UploadFile = File(...), db: Connection = Depends(get
             try:
                 await db.execute("INSERT INTO feeds (url) VALUES (?)", (url,))
                 added += 1
-            except:
+            except Exception:
                 pass
         await db.commit()
         logger.info("OPML import added {} feeds", added)

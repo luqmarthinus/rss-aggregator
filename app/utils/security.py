@@ -1,5 +1,7 @@
 from urllib.parse import urlparse
+
 from fastapi import HTTPException
+
 
 def validate_feed_url(url: str) -> str:
     parsed = urlparse(url)
