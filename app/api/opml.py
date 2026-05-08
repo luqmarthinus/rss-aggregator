@@ -1,4 +1,3 @@
-
 from aiosqlite import Connection
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import PlainTextResponse
@@ -10,12 +9,14 @@ from app.services.opml_service import generate_opml, parse_opml
 
 router = APIRouter(prefix="/feeds", tags=["OPML"])
 
+
 @router.get("/export.opml", response_class=PlainTextResponse)
 async def export_opml(db: Connection = Depends(get_db)):
     cursor = await db.execute("SELECT url, title FROM feeds")
     feeds = await cursor.fetchall()
     opml = generate_opml(feeds)
     return PlainTextResponse(content=opml, media_type="text/xml")
+
 
 @router.post("/import.opml", dependencies=[Depends(require_api_key), Depends(rate_limit)])
 async def import_opml(file: UploadFile = File(...), db: Connection = Depends(get_db)):

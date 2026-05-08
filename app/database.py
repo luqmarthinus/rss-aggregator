@@ -12,6 +12,7 @@ DB_PATH = Path(settings.database_path)
 # Connection dependency (per-request)
 # ------------------------------------------------------------------------------
 
+
 async def get_db():
     """
     Provides a database connection per request.
@@ -31,6 +32,7 @@ async def get_db():
 # ------------------------------------------------------------------------------
 # One-time database initialization
 # ------------------------------------------------------------------------------
+
 
 async def init_db():
     """

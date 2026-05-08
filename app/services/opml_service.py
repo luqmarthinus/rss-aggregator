@@ -18,19 +18,22 @@ def generate_opml(feeds: List[Union[Dict, Row]]) -> str:
         ET.SubElement(body, "outline", type="rss", xmlUrl=url, title=feed_title)
     return ET.tostring(root, encoding="unicode", xml_declaration=True)
 
+
 def parse_opml(content: bytes) -> List[str]:
     try:
         # Remove UTF-8 BOM if present
-        if content.startswith(b'\xef\xbb\xbf'):
+        if content.startswith(b"\xef\xbb\xbf"):
             content = content[3:]
         # Decode to string
-        text = content.decode('utf-8')
+        text = content.decode("utf-8")
+
         # Escape unescaped ampersands that are not part of XML entities
         # Pattern: & not followed by any known entity name or numeric reference
         def replace_amp(match):
             return "&amp;"
+
         # Match & that is not part of &amp; &lt; &gt; &quot; &apos; &#...; &#x...;
-        text = re.sub(r'&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)', replace_amp, text)
+        text = re.sub(r"&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)", replace_amp, text)
         # Parse the fixed XML
         root = ET.fromstring(text)
         urls = []

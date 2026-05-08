@@ -10,6 +10,7 @@ from app.schemas import ArticleOut, ArticleReadUpdate
 
 router = APIRouter(prefix="/articles", tags=["Articles"])
 
+
 @router.get("", response_model=list[ArticleOut])
 async def list_articles(
     feed_id: Optional[int] = Query(None),
@@ -17,7 +18,7 @@ async def list_articles(
     search: Optional[str] = Query(None),
     limit: int = Query(50, le=200),
     offset: int = Query(0),
-    db: Connection = Depends(get_db)
+    db: Connection = Depends(get_db),
 ):
     query = "SELECT id, feed_id, title, link, summary, published_at, is_read FROM articles WHERE 1=1"
     params = []
@@ -36,6 +37,7 @@ async def list_articles(
     cursor = await db.execute(query, params)
     rows = await cursor.fetchall()
     return [dict(row) for row in rows]
+
 
 @router.put("/{article_id}/read", dependencies=[Depends(require_api_key), Depends(rate_limit)])
 async def mark_read(article_id: int, update: ArticleReadUpdate, db: Connection = Depends(get_db)):

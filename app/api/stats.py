@@ -5,6 +5,7 @@ from app.database import get_db
 
 router = APIRouter(prefix="/stats", tags=["Stats"])
 
+
 @router.get("")
 async def get_stats(db: Connection = Depends(get_db)):
     feeds_cursor = await db.execute("SELECT COUNT(*) FROM feeds")

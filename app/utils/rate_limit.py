@@ -8,6 +8,7 @@ from app.config import settings
 # key: IP, value: list of timestamps
 request_log = defaultdict(list)
 
+
 def rate_limit_middleware(request: Request):
     client_ip = request.client.host
     now = time.time()

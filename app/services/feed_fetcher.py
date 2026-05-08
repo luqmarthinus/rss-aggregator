@@ -30,10 +30,7 @@ async def fetch_and_store_feed(db: Connection, feed_id: int, feed_url: str) -> L
         if not guid:
             continue
         # Check if article already exists
-        cursor = await db.execute(
-            "SELECT id FROM articles WHERE feed_id = ? AND guid = ?",
-            (feed_id, guid[:255])
-        )
+        cursor = await db.execute("SELECT id FROM articles WHERE feed_id = ? AND guid = ?", (feed_id, guid[:255]))
         exists = await cursor.fetchone()
         if exists:
             continue
@@ -51,14 +48,9 @@ async def fetch_and_store_feed(db: Connection, feed_id: int, feed_url: str) -> L
         await db.execute(
             """INSERT INTO articles (feed_id, guid, title, link, summary, published_at, content)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (feed_id, guid[:255], title, link, summary, published, content)
+            (feed_id, guid[:255], title, link, summary, published, content),
         )
-        new_articles.append({
-            "title": title,
-            "link": link,
-            "summary": summary,
-            "feed_id": feed_id
-        })
+        new_articles.append({"title": title, "link": link, "summary": summary, "feed_id": feed_id})
 
     await db.execute("UPDATE feeds SET last_fetch_at = CURRENT_TIMESTAMP WHERE id = ?", (feed_id,))
     await db.commit()
