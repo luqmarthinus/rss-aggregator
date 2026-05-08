@@ -177,7 +177,7 @@ function importOpml() {
                 document.getElementById("feedFilter").value = "all";
                 await loadArticles();
             } else {
-                alert("Import failed");
+                alert("Import failed, API Key required");
             }
         } catch (err) {
             alert("Import error");
