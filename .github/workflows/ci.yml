@@ -7,51 +7,20 @@ on:
     branches: [ main ]
 
 jobs:
-  lint-test-build:
+  lint-and-build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff format --check .
+      - run: ruff check .
+      - run: docker build --no-cache -t rss-aggregator .
 
-      - name: Install tooling
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff
-
-      - name: Run Ruff format check
-        run: ruff format --check .
-
-      - name: Run Ruff lint
-        run: ruff check .
-
-      - name: Build Docker image
-        run: docker build --no-cache -t rss-aggregator:ci .
-
-      - name: Smoke test container
-        run: |
-          docker run -d --name test-container -p 8000:8000 rss-aggregator:ci
-          echo "Waiting for container to be ready..."
-          # Wait up to 60 seconds for the health endpoint to respond
-          for i in {1..30}; do
-            if docker exec test-container python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" 2>/dev/null; then
-              echo "Health endpoint responded"
-              break
-            fi
-            echo "Attempt $i/30 - waiting..."
-            sleep 2
-          done
-          # Final check – exit if health endpoint still not responding
-          if ! docker exec test-container python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" 2>/dev/null; then
-            echo "Health endpoint did not respond within time limit"
-            docker logs test-container
-            exit 1
-          fi
-          docker logs test-container
-          docker stop test-container
-          docker rm test-container
+      # Smoke test using curl with retry, dummy API key
+      - run: |
+          docker run --rm -d --name test -p 8000:8000 -e API_KEY=ci rss-aggregator
+          curl --retry 15 --retry-delay 2 --retry-connrefused http://localhost:8000/health
+          docker stop test
