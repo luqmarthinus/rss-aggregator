@@ -1,26 +1,59 @@
-#!/bin/env bash
-# Initial setup for RSS Aggregator
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
-# Create data directory with correct permissions for container user (UID 1000)
-mkdir -p data
-if command -v docker &> /dev/null; then
-    # If running on Linux, fix ownership for the container's non-root user
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        echo "Setting ownership of ./data to UID 1000 (container user)"
-        sudo chown 1000:1000 data 2>/dev/null || echo "Warning: sudo required. Run: sudo chown 1000:1000 data"
-    else
-        # macOS/Windows – Docker uses a VM, permissions are usually fine
-        echo "Detected non-Linux OS. Permissions for ./data should be handled by Docker."
-    fi
-else
-    echo "Docker not found. Please install Docker and Docker Compose."
+echo "[+] Initialising RSS Aggregator setup..."
+
+# ------------------------------------------------------------------------------
+# Check Docker
+# ------------------------------------------------------------------------------
+
+if ! command -v docker >/dev/null 2>&1; then
+    echo "[-] Docker not found. Please install Docker and Docker Compose."
     exit 1
 fi
 
-# Copy environment example if .env doesn't exist
-if [ ! -f .env ]; then
-    cp .env.example .env
-    echo "Created .env file. Please edit it and set a strong API_KEY."
+mkdir -p data
+
+# ------------------------------------------------------------------------------
+# Handle permissions safely (only if explicitly required)
+# ------------------------------------------------------------------------------
+
+OS="$(uname -s)"
+
+if [[ "$OS" == "Linux" ]]; then
+    echo "[+] Linux detected"
+
+    # Only attempt chown if user explicitly has sudo
+    if command -v sudo >/dev/null 2>&1; then
+        echo "[+] Setting ownership for container UID 1001"
+        sudo chown 1001:1001 data || {
+            echo "[!] Could not set ownership. Run manually:"
+            echo "    sudo chown 1001:1001 data"
+        }
+    else
+        echo "[!] sudo not available. Skipping ownership change."
+    fi
+else
+    echo "[+] Non-Linux OS detected ($OS). Skipping chown."
 fi
 
-echo "Setup complete. Run 'docker compose up --build' to start."
+# ------------------------------------------------------------------------------
+# Env file bootstrap
+# ------------------------------------------------------------------------------
+
+if [[ ! -f .env ]]; then
+    if [[ -f .env.example ]]; then
+        cp .env.example .env
+        echo "[+] Created .env from .env.example"
+        echo "[!] IMPORTANT: Set a strong API_KEY before running."
+    else
+        echo "[-] Missing .env.example. Cannot continue safely."
+        exit 1
+    fi
+else
+    echo "[+] .env already exists"
+fi
+
+echo ""
+echo "[✓] Setup complete"
+echo "    Next: docker compose up --build"
