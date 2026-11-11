@@ -13,7 +13,8 @@ os.environ["RATE_LIMIT_PER_MINUTE"] = "1000"
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app import database  # noqa: E402
-from app.api import feeds as feeds_api, opml as opml_api  # noqa: E402
+from app.api import feeds as feeds_api  # noqa: E402
+from app.api import opml as opml_api  # noqa: E402
 from app.main import app  # noqa: E402
 
 AUTH = {"X-API-Key": "test-key"}
@@ -42,7 +43,9 @@ def client():
 
 def run_db(coro_fn):
     """Run ``coro_fn(db)`` against the test database."""
+
     async def runner():
         async for db in database.get_db():
             return await coro_fn(db)
+
     return asyncio.run(runner())

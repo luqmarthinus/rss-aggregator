@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff format --check .
+      - run: ruff check .
+      - run: docker build --no-cache -t rss-aggregator .
+
+      - name: Smoke test container
+        run: |
+          docker run --rm -d --name test -p 8000:8000 -e API_KEY=ci rss-aggregator
+          echo "Waiting for container to start..."
+          for i in {1..20}; do
+            if docker exec test python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" 2>/dev/null; then
+              echo "Health endpoint OK"
+              break
+            fi
+            echo "Attempt $i/20 - waiting..."
+            sleep 2
+          done
+          docker exec test python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+          docker stop test

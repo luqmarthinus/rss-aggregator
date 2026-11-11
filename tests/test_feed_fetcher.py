@@ -19,6 +19,7 @@ def _setup_and_store(raw):
         feed = await (await db.execute("SELECT title FROM feeds WHERE id = 1")).fetchone()
         rows = await (await db.execute("SELECT guid, published_at FROM articles ORDER BY guid")).fetchall()
         return first, second, feed["title"], [tuple(r) for r in rows]
+
     return run_db(go)
 
 

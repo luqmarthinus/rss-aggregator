@@ -31,6 +31,7 @@ async def refresh_all_feeds() -> None:
 
                 semaphore = asyncio.Semaphore(MAX_CONCURRENT_FETCHES)
                 async with create_session() as session:
+
                     async def refresh_one(feed):
                         async with semaphore:
                             await fetch_and_store_feed(db, feed["id"], feed["url"], session)

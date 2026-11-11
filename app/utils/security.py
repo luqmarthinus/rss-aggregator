@@ -8,6 +8,7 @@ Two layers are applied:
    while fetching (including redirect targets) is filtered, which also covers
    hostnames that resolve to private addresses and DNS rebinding.
 """
+
 import ipaddress
 import socket
 from typing import Any, Dict, List

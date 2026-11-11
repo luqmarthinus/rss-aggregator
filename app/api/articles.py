@@ -43,9 +43,7 @@ async def list_articles(
 
 @router.put("/{article_id}/read", dependencies=[Depends(require_api_key), Depends(rate_limit)])
 async def mark_read(article_id: int, update: ArticleReadUpdate, db: Connection = Depends(get_db)):
-    cursor = await db.execute(
-        "UPDATE articles SET is_read = ? WHERE id = ?", (1 if update.is_read else 0, article_id)
-    )
+    cursor = await db.execute("UPDATE articles SET is_read = ? WHERE id = ?", (1 if update.is_read else 0, article_id))
     if cursor.rowcount == 0:
         raise HTTPException(status_code=404, detail="Article not found")
     await db.commit()

@@ -1,6 +1,8 @@
-import aiosqlite
 from pathlib import Path
+
+import aiosqlite
 from loguru import logger
+
 from app.config import settings
 from app.models import ARTICLES_TABLE, FEEDS_TABLE, INDEXES
 

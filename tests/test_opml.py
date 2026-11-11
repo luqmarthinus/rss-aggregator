@@ -4,7 +4,10 @@ from app.services.opml_service import generate_opml, parse_opml
 
 
 def test_round_trip():
-    feeds = [{"url": "https://a.example/rss?x=1&y=2", "title": "A & B"}, {"url": "https://b.example/rss", "title": None}]
+    feeds = [
+        {"url": "https://a.example/rss?x=1&y=2", "title": "A & B"},
+        {"url": "https://b.example/rss", "title": None},
+    ]
     assert parse_opml(generate_opml(feeds).encode()) == [f["url"] for f in feeds]
 
 

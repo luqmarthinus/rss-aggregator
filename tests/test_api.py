@@ -3,9 +3,13 @@ from tests.conftest import AUTH, run_db
 
 def _seed_articles():
     async def go(db):
-        await db.execute("INSERT INTO feeds (id, url, title) VALUES (1, 'https://a.example/rss', 'A'), (2, 'https://b.example/rss', 'B')")
+        await db.execute(
+            "INSERT INTO feeds (id, url, title) VALUES "
+            "(1, 'https://a.example/rss', 'A'), (2, 'https://b.example/rss', 'B')"
+        )
         await db.executemany(
-            "INSERT INTO articles (feed_id, guid, title, link, summary, published_at, is_read) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO articles (feed_id, guid, title, link, summary, published_at, is_read) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
             [
                 (1, "a1", "Alpha 100%", "https://a.example/1", "", "2025-01-01 10:00:00", 0),
                 (1, "a2", "Beta", "https://a.example/2", "", "2025-01-02 10:00:00", 1),
@@ -13,6 +17,7 @@ def _seed_articles():
             ],
         )
         await db.commit()
+
     run_db(go)
 
 
@@ -22,7 +27,10 @@ def test_health(client):
 
 def test_write_requires_api_key(client):
     assert client.post("/feeds", json={"url": "https://hnrss.org/newest"}).status_code == 422
-    assert client.post("/feeds", json={"url": "https://hnrss.org/newest"}, headers={"X-API-Key": "nope"}).status_code == 403
+    assert (
+        client.post("/feeds", json={"url": "https://hnrss.org/newest"}, headers={"X-API-Key": "nope"}).status_code
+        == 403
+    )
 
 
 def test_add_list_delete_feed(client):

@@ -22,7 +22,10 @@ def create_session() -> aiohttp.ClientSession:
     return aiohttp.ClientSession(
         connector=connector,
         timeout=FETCH_TIMEOUT,
-        headers={"User-Agent": USER_AGENT, "Accept": "application/rss+xml, application/atom+xml, application/xml;q=0.9, */*;q=0.8"},
+        headers={
+            "User-Agent": USER_AGENT,
+            "Accept": "application/rss+xml, application/atom+xml, application/xml;q=0.9, */*;q=0.8",
+        },
     )
 
 
