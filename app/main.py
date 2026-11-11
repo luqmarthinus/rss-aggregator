@@ -25,10 +25,15 @@ async def lifespan(app: FastAPI):
     logger.info("Database ready")
     # Start background refresh loop
     async def periodic_refresh():
+        # Refresh once shortly after startup, then on the configured interval.
+        await asyncio.sleep(5)
         while True:
-            await asyncio.sleep(settings.refresh_interval_minutes * 60)
             logger.info("Background refresh starting")
-            await refresh_all_feeds()
+            try:
+                await refresh_all_feeds()
+            except Exception:
+                logger.exception("Background refresh failed")
+            await asyncio.sleep(settings.refresh_interval_minutes * 60)
     global refresh_task
     refresh_task = asyncio.create_task(periodic_refresh())
     yield
@@ -40,28 +45,22 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             logger.info("Background refresh stopped")
 
-app = FastAPI(title="RSS Aggregator API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="RSS Aggregator API", version="1.1.0", lifespan=lifespan)
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS: the bundled frontend is same-origin; set CORS_ORIGINS to allow others.
+if settings.cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["Content-Type", "X-API-Key"],
+    )
 
 # Include routers (unversioned) for backward compatibility
-app.include_router(feeds.router)
-app.include_router(articles.router)
-app.include_router(refresh.router)
-app.include_router(stats.router)
-app.include_router(opml.router)
-
-app.include_router(feeds.router, prefix="/v1")   # adds /v1/feeds
-app.include_router(articles.router, prefix="/v1")
-app.include_router(refresh.router, prefix="/v1")
-app.include_router(stats.router, prefix="/v1")
-app.include_router(opml.router, prefix="/v1")
+# OPML router goes before feeds so /feeds/export.opml isn't shadowed by future /feeds/{id} GET routes.
+for router in (opml.router, feeds.router, articles.router, refresh.router, stats.router):
+    app.include_router(router)                  # unversioned, for backward compatibility
+    app.include_router(router, prefix="/v1")    # e.g. /v1/feeds
 
 # Health check
 @app.get("/health")

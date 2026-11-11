@@ -69,12 +69,14 @@ All services are defined in `compose.yaml`. The FastAPI container serves the fro
 
 | Method | Endpoint | Auth required | Description |
 |---|---|---|---|
-| GET | `/feeds` or `/v1/feeds` | No | List all feeds (id, url, title) |
+| GET | `/feeds` or `/v1/feeds` | No | List all feeds (id, url, title, unread count) |
 | POST | `/feeds` or `/v1/feeds` | API key | Add a new RSS/Atom feed |
 | DELETE | `/feeds/{id}` or `/v1/feeds/{id}` | API key | Delete a feed and all its articles (CASCADE) |
 | GET | `/articles` or `/v1/articles` | No | List articles (paginated, filters) |
 | PUT | `/articles/{id}/read` or `/v1/articles/{id}/read` | API key | Mark article as read/unread |
+| POST | `/articles/mark-all-read[?feed_id=N]` | API key | Mark all (or one feed's) unread articles as read |
 | POST | `/refresh` or `/v1/refresh` | API key | Manually trigger a background refresh |
+| GET | `/refresh/status` | No | Whether a refresh is currently running |
 | GET | `/stats` or `/v1/stats` | No | Get feed / article / unread counts |
 | GET | `/feeds/export.opml` | No | Download all feeds as OPML file |
 | POST | `/feeds/import.opml` | API key | Upload an OPML file to add multiple feeds |
@@ -120,7 +122,8 @@ The FastAPI container defines a healthcheck that polls `/health` every 30 second
 | `API_KEY`     | Required. 64‑character hex key for write operations. Generate with openssl rand -hex 32        | Not set |
 | `DATABASE_PATH`     | Path inside the container where SQLite stores `aggregator.db`  | `/app/data/aggregator.db`  |
 | `REFRESH_INTERVAL_MINUTES`      | How often the background refresh runs (minutes)     | `30`|
-| `RATE_LIMIT_PER_MINUTE`     | Maximum number of write requests per IP per minute | `10` |
+| `RATE_LIMIT_PER_MINUTE`     | Maximum number of write requests per IP per minute | `60` |
+| `CORS_ORIGINS`     | Optional comma-separated origins allowed to call the API cross-origin (the bundled UI doesn't need it) | empty (CORS disabled) |
 
 These variables are set in `.env`. After changing them, restart the container:
 
@@ -128,6 +131,15 @@ These variables are set in `.env`. After changing them, restart the container:
 docker compose down
 docker compose up -d
 ```
+---
+
+## Running tests
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+pytest
+```
+
 ---
 
 ## Stopping the stack

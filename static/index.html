@@ -13,8 +13,9 @@
     <nav class="navbar navbar-dark">
         <div class="container-fluid">
             <span class="navbar-brand"><i class="bi-rss-fill"></i> RSS Feeder</span>
-            <div>
-                <button id="refreshBtn" class="btn btn-outline-light btn-sm me-2"><i class="bi-arrow-repeat"></i> Refresh</button>
+            <div class="d-flex align-items-center gap-2">
+                <span id="statsBadge" class="text-light small opacity-75 d-none d-sm-inline"></span>
+                <button id="refreshBtn" class="btn btn-outline-light btn-sm"><i class="bi-arrow-repeat"></i> Refresh</button>
                 <button id="apiKeyBtn" class="btn btn-outline-warning btn-sm"><i class="bi-key"></i> API Key</button>
             </div>
         </div>
@@ -43,26 +44,31 @@
                     <div class="card-header">
                         <div class="row g-2 align-items-center">
                             <div class="col-md-4">
-                                <input type="text" id="searchInput" class="form-control" placeholder="Search articles...">
+                                <input type="search" id="searchInput" class="form-control" placeholder="Search articles..." aria-label="Search articles">
                             </div>
                             <div class="col-md-3">
-                                <select id="readFilter" class="form-select">
-                                    <option value="all">All articles</option>
+                                <select id="readFilter" class="form-select" aria-label="Read status">
                                     <option value="unread">Unread only</option>
+                                    <option value="all">All articles</option>
                                     <option value="read">Read only</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <select id="feedFilter" class="form-select">
+                                <select id="feedFilter" class="form-select" aria-label="Feed">
                                     <option value="all">All feeds</option>
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <button id="searchBtn" class="btn btn-primary w-100"><i class="bi-search"></i> Search</button>
+                                <button id="markAllReadBtn" class="btn btn-outline-secondary btn-sm w-100" title="Mark all shown articles as read"><i class="bi-check2-all"></i> Mark all read</button>
                             </div>
                         </div>
                     </div>
-                    <div class="card-body p-3" id="articlesContainer"></div>
+                    <div class="card-body p-3">
+                        <div id="articlesContainer"></div>
+                        <div class="text-center">
+                            <button id="loadMoreBtn" class="btn btn-outline-secondary btn-sm d-none">Load more</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -77,7 +83,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="url" id="feedUrl" class="form-control" placeholder="e.g https://hnrss.org/newest or https://feeds.bbci.co.uk/news/rss.xml">
+                    <input type="url" id="feedUrl" aria-label="Feed URL" class="form-control" placeholder="e.g https://hnrss.org/newest or https://feeds.bbci.co.uk/news/rss.xml">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -86,6 +92,8 @@
             </div>
         </div>
     </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
 
     <footer class="text-center text-muted small py-4">
         RSS Feeder — your personal reading hub.
