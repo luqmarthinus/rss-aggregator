@@ -7,6 +7,20 @@ on:
     branches: [ main ]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: python -m pytest -q
+
   lint-and-build:
     runs-on: ubuntu-latest
     steps:
@@ -32,4 +46,6 @@ jobs:
             sleep 2
           done
           docker exec test python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+          # Also check the API can reach the database, not just that the server is up
+          docker exec test python -c "import urllib.request, json; print(json.load(urllib.request.urlopen('http://localhost:8000/stats')))" || exit 1
           docker stop test
