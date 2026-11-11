@@ -1,5 +1,4 @@
-# SQL schema strings – used by database.py
-# Kept here for maintainability
+# SQL schema strings – single source of truth used by database.init_db
 FEEDS_TABLE = """
 CREATE TABLE IF NOT EXISTS feeds (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,3 +25,9 @@ CREATE TABLE IF NOT EXISTS articles (
     UNIQUE(feed_id, guid)
 )
 """
+
+INDEXES = (
+    "CREATE INDEX IF NOT EXISTS idx_articles_feed_id ON articles (feed_id)",
+    "CREATE INDEX IF NOT EXISTS idx_articles_published ON articles (published_at DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_articles_read ON articles (is_read)",
+)

@@ -43,7 +43,7 @@ body {
     backdrop-filter: blur(2px);
 }
 
-.card:hover {
+.article-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--hover-shadow);
 }
@@ -158,6 +158,39 @@ body {
 .modal-header {
     border-bottom: 1px solid #e2e8f0;
     background: transparent;
+}
+
+.feed-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.feed-item .feed-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.feed-item.active .badge {
+    background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.feed-item:focus-within .delete-feed {
+    opacity: 1;
+}
+
+.article-card .article-meta {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+}
+
+.article-card .card-text img {
+    max-width: 100%;
+    height: auto;
 }
 
 /* Empty states */
