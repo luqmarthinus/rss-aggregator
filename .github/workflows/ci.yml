@@ -6,17 +6,35 @@ on:
   pull_request:
     branches: [ main ]
 
+# Least privilege: the job only needs to read the repository.
+permissions:
+  contents: read
+
 jobs:
   lint-and-build:
     runs-on: ubuntu-latest
+    # Covers a --no-cache image build plus the smoke test; stops a hung run burning minutes.
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      # Actions are pinned to full commit SHAs (tags can be moved); Dependabot keeps them current.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Don't leave the token in .git/config for later steps to read.
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.11"
-      - run: pip install ruff
+      # Pinned so a new ruff release can't change lint results unannounced.
+      # Dependabot doesn't track this line: bump it by hand.
+      - run: pip install ruff==0.17.4
       - run: ruff format --check .
       - run: ruff check .
+      # Runs before the slower image build so a failing test fails fast.
+      # tests/conftest.py sets its own API key and a temporary database.
+      - name: Run tests
+        run: |
+          pip install -r requirements.txt -r requirements-dev.txt
+          pytest -q
       - run: docker build --no-cache -t rss-aggregator .
 
       - name: Smoke test container
