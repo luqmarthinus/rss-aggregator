@@ -29,6 +29,12 @@ jobs:
       - run: pip install ruff==0.17.4
       - run: ruff format --check .
       - run: ruff check .
+      # Runs before the slower image build so a failing test fails fast.
+      # tests/conftest.py sets its own API key and a temporary database.
+      - name: Run tests
+        run: |
+          pip install -r requirements.txt -r requirements-dev.txt
+          pytest -q
       - run: docker build --no-cache -t rss-aggregator .
 
       - name: Smoke test container
