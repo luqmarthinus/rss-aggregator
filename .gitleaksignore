@@ -1,0 +1,5 @@
+# Reviewed gitleaks false positives, one fingerprint per line (commit:file:rule:line).
+# Add a line only after confirming the value is not a real secret.
+
+# README curl example uses the placeholder "your-api-key" (reviewed 2026-11-20).
+f899e75fcbd95ca9a2e22f77a159ef3b6a78f4bc:README.md:curl-auth-header:88
