@@ -60,4 +60,7 @@ jobs:
             sleep 2
           done
           docker exec test python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+          # /health only proves the server is up. /stats runs a real query, so it also
+          # proves the non-root user can open the SQLite database in /app/data.
+          docker exec test python -c "import urllib.request, json; print(json.load(urllib.request.urlopen('http://localhost:8000/stats')))" || exit 1
           docker stop test
