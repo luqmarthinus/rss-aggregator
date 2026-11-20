@@ -35,6 +35,16 @@ jobs:
         run: |
           pip install -r requirements.txt -r requirements-dev.txt
           pytest -q
+      # Audits every package the tests just ran against, including transitive ones
+      # that Dependabot can't see because they aren't pinned in requirements.txt.
+      # pip-audit runs from its own venv so its dependencies don't mix with the app's.
+      # Dependabot doesn't track this pin: bump it by hand.
+      - name: Audit dependencies
+        run: |
+          python -m venv "$RUNNER_TEMP/audit"
+          "$RUNNER_TEMP/audit/bin/pip" install pip-audit==2.10.1
+          site_packages="$(python -c 'import sysconfig; print(sysconfig.get_path("purelib"))')"
+          "$RUNNER_TEMP/audit/bin/pip-audit" --strict --path "$site_packages"
       - run: docker build --no-cache -t rss-aggregator .
 
       - name: Smoke test container
